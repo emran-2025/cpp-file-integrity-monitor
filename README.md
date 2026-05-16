@@ -33,12 +33,9 @@ You have been provided with the Apache `access.log` file from the Debian web ser
 Download the sample log file:
 (In a production environment, logs are typically located in /var/log/apache2/ or /var/log/httpd/)
 
-  ```bash
-wget [https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs](https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs) -O access.log
-Verify the file format:
+wget https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs -O access.log
 
 
-  ```bash
 head -n 3 access.log
 Note: The logs follow the Combined Log Format. Key fields include: Column 1 (IP Address), Column 4 (Timestamp), Column 6 (HTTP Method), Column 7 (Requested URL), Column 9 (Status Code), and Column 12+ (User-Agent).
 
