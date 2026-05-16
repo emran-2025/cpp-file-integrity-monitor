@@ -32,12 +32,14 @@ You have been provided with the Apache `access.log` file from the Debian web ser
 Download the sample log file:
 (In a production environment, logs are typically located in /var/log/apache2/ or /var/log/httpd/)
 
-Bash
+ ```bash
 wget [https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs](https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs) -O access.log
+ ```
 Verify the file format:
 
-Bash
+ ```bash
 head -n 3 access.log
+ ```
 Note: The logs follow the Combined Log Format. Key fields include: Column 1 (IP Address), Column 4 (Timestamp), Column 6 (HTTP Method), Column 7 (Requested URL), Column 9 (Status Code), and Column 12+ (User-Agent).
 
 Part 2: Baseline Traffic Analysis
@@ -47,16 +49,18 @@ Exercise 1: Total Request Volume
 Goal: Determine the overall size of the log file to understand the traffic volume.
 Command:
 
-Bash
+ ```bash
 wc -l access.log
+ ```
 Explanation: wc -l counts the total number of lines. Each line represents one HTTP request.
 
 Exercise 2: Top 5 Most Active IP Addresses
 Goal: Identify the sources generating the most traffic. Disproportionately high requests from a single IP often indicate bots, scrapers, or brute-force tools.
 Command:
 
-Bash
+ ```bash
 awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -n 5
+ ```
 Explanation:
 
 awk '{print $1}': Extracts the first column (IP addresses).
@@ -73,8 +77,9 @@ Exercise 3: High-Volume 404 Errors
 Goal: Automated vulnerability scanners frequently search for hidden directories or vulnerable files, generating numerous "404 Not Found" errors.
 Command:
 
-Bash
+ ```bash
 awk '$9 == 404 {print $7}' access.log | sort | uniq -c | sort -rn | head -n 5
+ ```
 Explanation: This uses awk to look specifically at the 9th column (status code). If it equals 404, it prints the 7th column (the URL requested), then sorts and counts the most frequently requested missing files.
 
 Part 3: Threat Hunting and Attack Signatures
@@ -84,16 +89,18 @@ Exercise 4: Detecting SQL Injection (SQLi)
 Goal: Attackers often use SQL keywords in the URL to manipulate backend databases.
 Command:
 
-Bash
+ ```bash
 grep -iE "(UNION SELECT|DROP TABLE|1=1)" access.log
+ ```
 Explanation: grep -iE allows for a case-insensitive, extended regular expression search, matching multiple common SQL injection patterns at once.
 
 Exercise 5: Detecting Directory Traversal
 Goal: Attackers use ../ to navigate outside the intended web root directory to read sensitive files like /etc/passwd.
 Command:
 
-Bash
+ ```bash
 grep -E "(\.\./|\.\.%2F)" access.log
+ ```
 Explanation: This searches for both standard ../ and its URL-encoded equivalent ..%2F.
 
 Part 4: Advanced Analysis
@@ -103,14 +110,16 @@ Exercise 6: Isolating Login Brute-Force Attempts
 Goal: Find IP addresses that are repeatedly sending POST requests (the HTTP method used for submitting login credentials).
 Command:
 
-Bash
+ ```bash
 awk '$6 == "\"POST"' access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head -n 3
+ ```
 Explanation: The first awk command filters out any line that isn't a POST request. The subsequent commands extract and count the IP addresses making those POST requests.
 
 Exercise 7: Identifying Malicious User-Agents
 Goal: Sometimes attackers forget to spoof their User-Agent, leaving behind the default name of the hacking tool they are using (like Nikto, Nmap, or DirBuster).
 Command:
 
-Bash
+ ```bash
 grep -i "nikto" access.log | awk '{print $1}' | sort -u
+ ```
 Explanation: This searches the logs for the popular vulnerability scanner "Nikto" and outputs a clean, deduplicated list (sort -u) of the attacking IP addresses.
