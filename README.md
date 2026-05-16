@@ -29,3 +29,8 @@ You have been provided with the Apache `access.log` file from the Debian web ser
    ```bash
    mkdir threatforge-investigation
    cd threatforge-investigation
+
+Download the sample log file:
+(In a production environment, logs are typically located in /var/log/apache2/ or /var/log/httpd/)
+wget https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs -O access.log
+   
