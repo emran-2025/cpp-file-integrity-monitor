@@ -1,4 +1,3 @@
-Markdown
 # Lab: Web Server Log Analysis with CLI Tools
 
 ## Learning Outcomes
@@ -30,94 +29,81 @@ You have been provided with the Apache `access.log` file from the Debian web ser
    ```bash
    mkdir threatforge-investigation
    cd threatforge-investigation
-Download the sample log file:
-(In a production environment, logs are typically located in /var/log/apache2/ or /var/log/httpd/)
-
-wget https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs -O access.log
-
-
+2.	Download the sample log file: (In a production environment, logs are typically located in /var/log/apache2/ or /var/log/httpd/)
+Bash
+wget [https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs](https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs) -O access.log
+3.	Verify the file format:
+Bash
 head -n 3 access.log
 Note: The logs follow the Combined Log Format. Key fields include: Column 1 (IP Address), Column 4 (Timestamp), Column 6 (HTTP Method), Column 7 (Requested URL), Column 9 (Status Code), and Column 12+ (User-Agent).
-
+________________________________________
 Part 2: Baseline Traffic Analysis
 Let's establish a baseline of the traffic before hunting for specific threats.
-
 Exercise 1: Total Request Volume
-Goal: Determine the overall size of the log file to understand the traffic volume.
-Command:
-
-  ```bash
+Goal: Determine the overall size of the log file to understand the traffic volume. Command:
+Bash
 wc -l access.log
 Explanation: wc -l counts the total number of lines. Each line represents one HTTP request.
-
 Exercise 2: Top 5 Most Active IP Addresses
-Goal: Identify the sources generating the most traffic. Disproportionately high requests from a single IP often indicate bots, scrapers, or brute-force tools.
-Command:
-
-  ```bash
+Goal: Identify the sources generating the most traffic. Disproportionately high requests from a single IP often indicate bots, scrapers, or brute-force tools. Command:
+Bash
 awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -n 5
 Explanation:
-
-awk '{print $1}': Extracts the first column (IP addresses).
-
-sort: Groups identical IP addresses together.
-
-uniq -c: Counts the consecutive occurrences of each IP.
-
-sort -rn: Sorts the output in reverse numerical order (highest count first).
-
-head -n 5: Limits the output to the top 5 lines.
-
+•	awk '{print $1}': Extracts the first column (IP addresses).
+•	sort: Groups identical IP addresses together.
+•	uniq -c: Counts the consecutive occurrences of each IP.
+•	sort -rn: Sorts the output in reverse numerical order (highest count first).
+•	head -n 5: Limits the output to the top 5 lines.
 Exercise 3: High-Volume 404 Errors
-Goal: Automated vulnerability scanners frequently search for hidden directories or vulnerable files, generating numerous "404 Not Found" errors.
-Command:
-
-  ```bash
+Goal: Automated vulnerability scanners frequently search for hidden directories or vulnerable files, generating numerous "404 Not Found" errors. Command:
+Bash
 awk '$9 == 404 {print $7}' access.log | sort | uniq -c | sort -rn | head -n 5
 Explanation: This uses awk to look specifically at the 9th column (status code). If it equals 404, it prints the 7th column (the URL requested), then sorts and counts the most frequently requested missing files.
-
+________________________________________
 Part 3: Threat Hunting and Attack Signatures
 Now we will search for specific attack payloads within the HTTP requests.
-
 Exercise 4: Detecting SQL Injection (SQLi)
-Goal: Attackers often use SQL keywords in the URL to manipulate backend databases.
-Command:
-
-  ```bash
+Goal: Attackers often use SQL keywords in the URL to manipulate backend databases. Command:
+Bash
 grep -iE "(UNION SELECT|DROP TABLE|1=1)" access.log
 Explanation: grep -iE allows for a case-insensitive, extended regular expression search, matching multiple common SQL injection patterns at once.
-
 Exercise 5: Detecting Directory Traversal
-Goal: Attackers use ../ to navigate outside the intended web root directory to read sensitive files like /etc/passwd.
-Command:
-
-  ```bash
+Goal: Attackers use ../ to navigate outside the intended web root directory to read sensitive files like /etc/passwd. Command:
+Bash
 grep -E "(\.\./|\.\.%2F)" access.log
 Explanation: This searches for both standard ../ and its URL-encoded equivalent ..%2F.
-
+________________________________________
 Part 4: Advanced Analysis
 Let's dig deeper to isolate specific attacker behaviors.
-
 Exercise 6: Isolating Login Brute-Force Attempts
-Goal: Find IP addresses that are repeatedly sending POST requests (the HTTP method used for submitting login credentials).
-Command:
-
-  ```bash
+Goal: Find IP addresses that are repeatedly sending POST requests (the HTTP method used for submitting login credentials). Command:
+Bash
 awk '$6 == "\"POST"' access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head -n 3
 Explanation: The first awk command filters out any line that isn't a POST request. The subsequent commands extract and count the IP addresses making those POST requests.
-
 Exercise 7: Identifying Malicious User-Agents
-Goal: Sometimes attackers forget to spoof their User-Agent, leaving behind the default name of the hacking tool they are using (like Nikto, Nmap, or DirBuster).
-Command:
-
-  ```bash
+Goal: Sometimes attackers forget to spoof their User-Agent, leaving behind the default name of the hacking tool they are using (like Nikto, Nmap, or DirBuster). Command:
+Bash
 grep -i "nikto" access.log | awk '{print $1}' | sort -u
 Explanation: This searches the logs for the popular vulnerability scanner "Nikto" and outputs a clean, deduplicated list (sort -u) of the attacking IP addresses.
-
+________________________________________
 Part 5: Incident Report Deliverable
 Compile your findings into a clean report format for the engineering team. Create a file named ThreatForge-Incident-Report.md and complete the template below based on the commands executed in this lab.
+Markdown
+# ThreatForge Academy: Log Analysis Incident Report
 
+**Analyst Username:** emran_2004
+**Student ID:** 2304015@bdu.ac.bd
+**University:** University of Frontier Technology Bangladesh
+**Date:** [Insert Current Date]
 
+## 1. Executive Summary
+[Write 1-2 sentences summarizing if the server was under attack and what kind of attacks were prevalent.]
+
+## 2. Traffic Overview
+* **Total Requests Analyzed:** [Result from Ex. 1]
+* **Top 3 Most Active IP Addresses:** 1. [IP 1]
+  2. [IP 2]
+  3. [IP 3]
 
 ## 3. Threat Intelligence
 * **Most Frequent Missing File (404 Error):** [Result from Ex. 3]
@@ -126,3 +112,4 @@ Compile your findings into a clean report format for the engineering team. Creat
 
 ## 4. Recommendations
 * [Suggest 1-2 ways to stop the attack, such as blocking the top IP address in the firewall or implementing rate-limiting on POST requests.]
+
