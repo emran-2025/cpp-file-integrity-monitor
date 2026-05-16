@@ -34,6 +34,5 @@ Download the sample log file:
 (In a production environment, logs are typically located in /var/log/apache2/ or /var/log/httpd/)
 wget https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs -O access.log
    
-
-Verify the file format:
+Bash
 head -n 3 access.log
